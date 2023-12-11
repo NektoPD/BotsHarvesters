@@ -6,7 +6,8 @@ public class RandomResourseGenerator : MonoBehaviour
 {
     [SerializeField] private Resource _template;
     private Terrain _terrain;
-    private float _cooldownTime = 1;
+    private float _cooldownTime = 1f;
+
 
     private void Start()
     {

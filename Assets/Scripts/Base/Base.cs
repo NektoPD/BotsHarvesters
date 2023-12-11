@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -16,19 +18,31 @@ public class Base : MonoBehaviour
         _resourceCount++;
     }
 
-    private void Start()
+    private void Awake()
     {
-        _units.AddRange(GetComponentsInChildren<Unit>());
+        _units.AddRange(FindObjectsOfType<Unit>());
+
+        foreach (var unit in _units)
+        {
+            unit.OnAvailable += HandleUnitsAvailable;
+        }
     }
 
-    private void Update()
+    private void OnDestroy()
     {
-        ScanForResources();
+        foreach (var unit in _units)
+        {
+            unit.OnAvailable -= HandleUnitsAvailable;
+        }
+    }
+
+    public void HandleUnitsAvailable()
+    {
+        StartCoroutine(ScanForResources());
         AssignResourcesToUnits();
-        Debug.Log("Resources obtained: " + _resourceCount);
     }
 
-    private void ScanForResources()
+    private IEnumerator ScanForResources()
     {
         Collider[] resourceColliders = Physics.OverlapSphere(transform.position, _scanRadius, _resourceLayer);
 
@@ -41,25 +55,28 @@ public class Base : MonoBehaviour
                 resource.Assign();
             }
         }
+
+        yield return null;
     }
 
     private void AssignResourcesToUnits()
     {
-        while (_resources.Count > 0 && _units.Exists(unit => !unit.IsBusy))
+        while (_resources.Count > 0)
         {
             Resource resource = _resources.Peek();
             Unit availableUnit = _units.Find(unit => !unit.IsBusy);
+
             if (availableUnit != null)
             {
                 availableUnit.AssignCurrentResource(resource);
-                _resources.Dequeue(); 
+                _resources.Dequeue();
             }
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.TryGetComponent<Resource>(out Resource resource))
+        if(other.TryGetComponent<Resource>(out  Resource resource))
         {
             _gotResource.Invoke();
         }
