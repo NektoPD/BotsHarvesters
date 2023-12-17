@@ -8,7 +8,6 @@ public class RandomResourseGenerator : MonoBehaviour
     private Terrain _terrain;
     private float _cooldownTime = 1f;
 
-
     private void Start()
     {
         _terrain = GetComponent<Terrain>();
@@ -17,17 +16,17 @@ public class RandomResourseGenerator : MonoBehaviour
 
     private IEnumerator SpawnObject()
     {
+        float defaultYpoition = 1f;
         bool isWorking = true;
+        float minX = _terrain.transform.position.x;
+        float maxX = minX + _terrain.terrainData.size.x;
+        float minZ = _terrain.transform.position.z;
+        float maxZ = minZ + _terrain.terrainData.size.z;
+        WaitForSeconds cooldown = new WaitForSeconds(_cooldownTime);
 
         while (isWorking)
         {
-            float minX = _terrain.transform.position.x;
-            float maxX = minX + _terrain.terrainData.size.x;
-            float minZ = _terrain.transform.position.z;
-            float maxZ = minZ + _terrain.terrainData.size.z;
-            WaitForSeconds cooldown = new WaitForSeconds(_cooldownTime);
-
-            Instantiate(_template, new Vector3(Random.Range(minX, maxX), 1, Random.Range(minZ, maxZ)), Quaternion.identity);
+            Instantiate(_template, new Vector3(Random.Range(minX, maxX), defaultYpoition, Random.Range(minZ, maxZ)), Quaternion.identity);
 
             yield return cooldown;
         }

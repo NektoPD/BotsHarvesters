@@ -1,53 +1,40 @@
-using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(UnitMover))]
 public class Unit : MonoBehaviour
 {
-    public Action OnAvailable;
-    private Resource _currentResource;
     [SerializeField] private Base _base;
+
+    public UnityEvent Dropeed;
+    private Resource _currentResource;
     private UnitMover _mover;
     private bool _isPicked;
+    
     public bool IsBusy { get; private set; }
-
-    public void AssignCurrentResource(Resource resource)
-    {
-        if (resource == null || IsBusy) return;
-
-        _currentResource = resource;
-        MoveToTarget();
-        IsBusy = true;
-    }
 
     private void Start()
     {
-        _base = GetComponent<Base>();
         _mover = GetComponent<UnitMover>();
         IsBusy = false;
-
-        OnAvailable.Invoke();
     }
 
-    private void MoveToTarget()
+    public void AssignCurrentResource(Resource resource, Transform position)
     {
-        if (_currentResource == null) return;
-
-        _mover.SetTarget(_currentResource.transform.position);
+        if (resource != null || IsBusy == false)
+        {
+            _currentResource = resource;
+            SetTarget(position.position);
+            IsBusy = true;
+        }
     }
 
-    private void MoveToBase()
-    {
-        if (_base == null) return;
-
-        _mover.SetTarget(_base.transform.position);
-    }
-
-    private void PickUpResource()
+    private void PickUpResource(Resource resource)
     {
         _isPicked = true;
         _currentResource.transform.SetParent(transform);
-        MoveToBase();
+
+        SetTarget(_base.transform.position);
     }
 
     private void DropOffResource()
@@ -57,19 +44,26 @@ public class Unit : MonoBehaviour
         _currentResource.Destroy();
 
         IsBusy = false;
-
-        OnAvailable?.Invoke();
+        Dropeed.Invoke();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!_isPicked && other.gameObject.TryGetComponent(out Resource resource))
+        if (!_isPicked && other.TryGetComponent<Resource>(out Resource resource))
         {
-            PickUpResource();
+            if (resource == _currentResource)
+            {
+                PickUpResource(_currentResource);
+            }
         }
-        else if (_isPicked && other.gameObject.TryGetComponent<Base>(out Base @base))
+        else if (_isPicked && other.TryGetComponent<Base>(out Base @base))
         {
             DropOffResource();
         }
+    }
+
+    private void SetTarget(Vector3 targetPosition)
+    {
+        _mover.SetTarget(targetPosition);
     }
 }

@@ -7,10 +7,15 @@ public class UnitMover : MonoBehaviour
     private bool _haveTarget = false;
 
     private void Update()
-    {
-        if (_haveTarget)
+    { 
+        if(_haveTarget)
         {
             transform.position = Vector3.MoveTowards(transform.position, _targetPosition, _speed * Time.deltaTime);
+
+            if(transform.position == _targetPosition )
+            {
+                _haveTarget = false;
+            }
         }
     }
 
