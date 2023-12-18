@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ public class Base : MonoBehaviour
     private BaseScanner _baseScanner;
     private List<Unit> _units = new List<Unit>();
     private List<Resource> _filteredResources = new List<Resource>();
+    private Unit _availableUnit;
 
     private void Start()
     {
@@ -16,6 +18,8 @@ public class Base : MonoBehaviour
         _baseScanner = GetComponent<BaseScanner>();
 
         _baseScanner.Detected += AssignResourcesToUnits;
+
+        StartCoroutine(FindAvailableUnit(_units));
     }
 
     public void IncreaseResourceCount()
@@ -25,13 +29,12 @@ public class Base : MonoBehaviour
 
     private void AssignResourcesToUnits()
     {
-        Unit availableUnit = FindAvailableUnit(_units);
         Resource resource = _baseScanner.GetResource();
        
         if (resource != null && !_filteredResources.Contains(resource))
         {
             _filteredResources.Add(resource);
-            availableUnit.AssignCurrentResource(resource, resource.transform);
+            _availableUnit.AssignCurrentResource(resource, resource.transform);
         }
         else
         {
@@ -39,16 +42,20 @@ public class Base : MonoBehaviour
         }
     }
 
-    private Unit FindAvailableUnit(List<Unit> units)
+    private IEnumerator FindAvailableUnit(List<Unit> units)
     {
-        foreach (Unit unit in units)
+        while (true)
         {
-            if (!unit.IsBusy)
+            foreach (Unit unit in units)
             {
-                return unit;
+                if (!unit.IsBusy)
+                {
+                    _availableUnit = unit;
+                    _baseScanner.ScanForResources();
+                }
             }
-        }
 
-        return null;
+            yield return null;
+        }
     }
 }

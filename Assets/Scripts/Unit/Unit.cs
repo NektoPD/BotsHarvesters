@@ -1,22 +1,27 @@
 using UnityEngine;
 using UnityEngine.Events;
 
+[RequireComponent(typeof(UnitResourceCollector))]
 [RequireComponent(typeof(UnitMover))]
 public class Unit : MonoBehaviour
 {
     [SerializeField] private Base _base;
 
-    public UnityEvent Dropeed;
+    public UnityEvent IsFree;
+    public UnityEvent Dropped;
     private Resource _currentResource;
     private UnitMover _mover;
-    private bool _isPicked;
+    private UnitResourceCollector _collector;
     
     public bool IsBusy { get; private set; }
 
     private void Start()
     {
-        _mover = GetComponent<UnitMover>();
         IsBusy = false;
+        _mover = GetComponent<UnitMover>();
+        _collector = GetComponent<UnitResourceCollector>();
+
+        IsFree.Invoke();
     }
 
     public void AssignCurrentResource(Resource resource, Transform position)
@@ -29,36 +34,21 @@ public class Unit : MonoBehaviour
         }
     }
 
-    private void PickUpResource(Resource resource)
-    {
-        _isPicked = true;
-        _currentResource.transform.SetParent(transform);
-
-        SetTarget(_base.transform.position);
-    }
-
-    private void DropOffResource()
-    {
-        _isPicked = false;
-        _currentResource.transform.SetParent(null);
-        _currentResource.Destroy();
-
-        IsBusy = false;
-        Dropeed.Invoke();
-    }
-
     private void OnTriggerEnter(Collider other)
     {
-        if (!_isPicked && other.TryGetComponent<Resource>(out Resource resource))
+        if (!_collector.IsPicked && other.TryGetComponent<Resource>(out Resource resource))
         {
             if (resource == _currentResource)
             {
-                PickUpResource(_currentResource);
+                _collector.PickUpResource(_currentResource);
+                SetTarget(_base.transform.position);
             }
         }
-        else if (_isPicked && other.TryGetComponent<Base>(out Base @base))
+        else if (_collector.IsPicked && other.TryGetComponent<Base>(out Base @base))
         {
-            DropOffResource();
+            _collector.DropOffResource(_currentResource);
+            IsBusy = false;
+            Dropped.Invoke();
         }
     }
 

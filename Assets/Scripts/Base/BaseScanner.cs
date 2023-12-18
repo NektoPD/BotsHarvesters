@@ -11,35 +11,18 @@ public class BaseScanner : MonoBehaviour
     public UnityAction Detected;
     private Queue<Resource> _resources = new Queue<Resource>();
 
-    private void Start()
+    public void ScanForResources()
     {
-        StartCoroutine(ScanForResources());
-    }
+        Collider[] resourceColliders = Physics.OverlapSphere(transform.position, _scanRadius, _resourceLayer);
 
-    private IEnumerator ScanForResources()
-    {
-        float delay = 1f;
-        WaitForSeconds scanDelay = new WaitForSeconds(delay);
-        
-        while (true)
+        foreach (var collider in resourceColliders)
         {
-            Collider[] resourceColliders = Physics.OverlapSphere(transform.position, _scanRadius, _resourceLayer);
-
-            foreach (var collider in resourceColliders)
+            Resource resource = collider.GetComponent<Resource>();
+            if (resource != null)
             {
-                Resource resource = collider.GetComponent<Resource>();
-                if (resource != null)
-                {
-                    _resources.Enqueue(resource);
-                    Detected.Invoke();
-                }
-                else
-                {
-                    yield return scanDelay;
-                }
+                _resources.Enqueue(resource);
+                Detected.Invoke();
             }
-
-            yield return scanDelay;
         }
     }
 
